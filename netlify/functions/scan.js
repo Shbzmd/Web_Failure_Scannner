@@ -1,92 +1,116 @@
 const fetch = require('node-fetch');
 const { JSDOM } = require('jsdom');
+const path = require('path');
+const { URL } = require('url');
 
-exports.handler = async function (event) {
-  const url = event.queryStringParameters.url;
+exports.handler = async function(event) {
+  const pageUrl = event.queryStringParameters.url;
 
-  if (!url) {
+  if (!pageUrl) {
     return {
       statusCode: 400,
-      body: JSON.stringify({
-        errors: [{ type: "Input", issue: "No URL provided" }]
-      })
+      body: JSON.stringify({ errors: [{ type: "Input", issue: "No URL provided" }] })
     };
   }
 
   try {
-    const res = await fetch(url);
-    const html = await res.text();
+    const response = await fetch(pageUrl);
+    const html = await response.text();
     const dom = new JSDOM(html);
     const document = dom.window.document;
 
     let errors = [];
 
-    /* ===== CSS CHECK ===== */
-    const cssLinks = document.querySelectorAll("link[rel='stylesheet']");
+    // ================= CSS CHECK =================
+    const cssLinks = [...document.querySelectorAll("link[rel='stylesheet']")];
 
     if (cssLinks.length === 0) {
-      errors.push({
-        type: "CSS",
-        issue: "No external CSS file detected on this page."
-      });
+      errors.push({ type: "CSS", issue: "No CSS file detected on page." });
     } else {
-      cssLinks.forEach(link => {
-        if (!link.href || link.href.trim() === "") {
+      for (const link of cssLinks) {
+        const cssUrl = new URL(link.href, pageUrl).href;
+        try {
+          const res = await fetch(cssUrl);
+          if (!res.ok) {
+            errors.push({
+              type: "CSS",
+              issue: `CSS file failed to load (${cssUrl}) - Status ${res.status}`
+            });
+          }
+        } catch {
           errors.push({
             type: "CSS",
-            issue: "Stylesheet tag found with empty href."
+            issue: `CSS file unreachable: ${cssUrl}`
           });
         }
-      });
+      }
     }
 
-    /* ===== JAVASCRIPT CHECK ===== */
-    const scripts = document.querySelectorAll("script");
+    // ================= JAVASCRIPT CHECK =================
+    const scripts = [...document.querySelectorAll("script[src]")];
 
     if (scripts.length === 0) {
-      errors.push({
-        type: "JavaScript",
-        issue: "No JavaScript detected on this page."
-      });
+      errors.push({ type: "JavaScript", issue: "No JavaScript file detected on page." });
     } else {
-      scripts.forEach(script => {
-        if (!script.src && !script.textContent.trim()) {
+      for (const script of scripts) {
+        const jsUrl = new URL(script.src, pageUrl).href;
+        try {
+          const res = await fetch(jsUrl);
+          if (!res.ok) {
+            errors.push({
+              type: "JavaScript",
+              issue: `JS file failed to load (${jsUrl}) - Status ${res.status}`
+            });
+          }
+        } catch {
           errors.push({
             type: "JavaScript",
-            issue: "Script tag present but empty."
+            issue: `JS file unreachable: ${jsUrl}`
           });
         }
-      });
+      }
     }
 
-    /* ===== IMAGE CHECK ===== */
-    const images = document.querySelectorAll("img");
+    // ================= IMAGE CHECK =================
+    const images = [...document.querySelectorAll("img")];
 
-    images.forEach(img => {
-      if (!img.src || img.src.trim() === "") {
+    for (const img of images) {
+      if (!img.src) {
+        errors.push({ type: "Image", issue: "Image tag found without src" });
+        continue;
+      }
+
+      const imgUrl = new URL(img.src, pageUrl).href;
+      try {
+        const res = await fetch(imgUrl);
+        if (!res.ok) {
+          errors.push({
+            type: "Image",
+            issue: `Image failed to load (${imgUrl}) - Status ${res.status}`
+          });
+        }
+      } catch {
         errors.push({
           type: "Image",
-          issue: "Image tag found without source."
+          issue: `Image unreachable: ${imgUrl}`
         });
       }
-    });
+    }
 
-    /* ===== RETURN ALL ERRORS TOGETHER ===== */
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ errors })
     };
 
-  } catch (err) {
+  } catch (error) {
     return {
       statusCode: 500,
       body: JSON.stringify({
-        errors: [{
-          type: "System",
-          issue: "Scanning failed due to network / site restriction."
-        }],
-        message: err.message
+        errors: [
+          { type: "System", issue: "Website blocked scanning or failed to load." }
+        ],
+        message: error.message
       })
     };
   }
