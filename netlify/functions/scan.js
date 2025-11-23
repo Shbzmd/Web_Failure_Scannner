@@ -2,7 +2,7 @@ const fetch = require('node-fetch');
 const { JSDOM } = require('jsdom');
 const { URL } = require('url');
 
-exports.handler = async function(event) {
+exports.handler = async function (event) {
   const pageUrl = event.queryStringParameters.url;
 
   if (!pageUrl) {
@@ -21,80 +21,102 @@ exports.handler = async function(event) {
     let errors = [];
     let reports = [];
 
-    // ================= CSS FILE CHECK =================
+    /* ================= CSS CHECK ================= */
+
     const cssLinks = [...document.querySelectorAll("link[rel='stylesheet']")];
 
-    for (const link of cssLinks) {
-      const cssUrl = new URL(link.href, pageUrl).href;
+    if (cssLinks.length === 0) {
+      errors.push({
+        type: "CSS",
+        issue: "No CSS files found on this website."
+      });
+    } else {
+      for (const link of cssLinks) {
+        const cssUrl = new URL(link.href, pageUrl).href;
 
-      try {
-        const res = await fetch(cssUrl);
-        if (!res.ok) {
+        try {
+          const res = await fetch(cssUrl, { method: 'HEAD' });
+          if (!res.ok) {
+            errors.push({
+              type: "CSS",
+              issue: `CSS failed to load: ${cssUrl} (Status ${res.status})`
+            });
+          } else {
+            reports.push({
+              type: "CSS",
+              issue: `CSS loaded successfully: ${cssUrl}`
+            });
+          }
+        } catch {
           errors.push({
             type: "CSS",
-            issue: `CSS file failed: ${cssUrl} (Status ${res.status})`
-          });
-        } else {
-          reports.push({
-            type: "CSS",
-            issue: `CSS file working: ${cssUrl}`
+            issue: `CSS unreachable: ${cssUrl}`
           });
         }
-      } catch {
-        errors.push({
-          type: "CSS",
-          issue: `CSS unreachable: ${cssUrl}`
-        });
       }
     }
 
-    if (cssLinks.length === 0) {
-      errors.push({ type: "CSS", issue: "No CSS files found" });
-    }
+    /* ================= JAVASCRIPT CHECK ================= */
 
-    // ================= JAVASCRIPT FILE CHECK =================
     const scripts = [...document.querySelectorAll("script[src]")];
 
-    for (const script of scripts) {
-      const jsUrl = new URL(script.src, pageUrl).href;
+    if (scripts.length === 0) {
+      errors.push({
+        type: "JavaScript",
+        issue: "No JavaScript files found on this website."
+      });
+    } else {
+      for (const script of scripts) {
+        const jsUrl = new URL(script.src, pageUrl).href;
 
-      try {
-        const res = await fetch(jsUrl);
-        if (!res.ok) {
+        try {
+          const res = await fetch(jsUrl, { method: 'HEAD' });
+          if (!res.ok) {
+            errors.push({
+              type: "JavaScript",
+              issue: `JS failed to load: ${jsUrl} (Status ${res.status})`
+            });
+          } else {
+            reports.push({
+              type: "JavaScript",
+              issue: `JS loaded successfully: ${jsUrl}`
+            });
+          }
+        } catch {
           errors.push({
             type: "JavaScript",
-            issue: `JS file failed: ${jsUrl} (Status ${res.status})`
-          });
-        } else {
-          reports.push({
-            type: "JavaScript",
-            issue: `JS file working: ${jsUrl}`
+            issue: `JS unreachable: ${jsUrl}`
           });
         }
-      } catch {
-        errors.push({
-          type: "JavaScript",
-          issue: `JS unreachable: ${jsUrl}`
-        });
       }
     }
 
-    if (scripts.length === 0) {
-      errors.push({ type: "JavaScript", issue: "No JS files found" });
-    }
+    /* ================= IMAGE CHECK ================= */
 
-    // ================= IMAGE CHECK =================
     const images = [...document.querySelectorAll("img")];
 
     for (const img of images) {
+      if (!img.src) {
+        errors.push({
+          type: "Image",
+          issue: "Image tag found without src attribute."
+        });
+        continue;
+      }
+
       const imgUrl = new URL(img.src, pageUrl).href;
 
       try {
-        const res = await fetch(imgUrl);
+        const res = await fetch(imgUrl, { method: 'HEAD' });
         if (!res.ok) {
           errors.push({
             type: "Image",
-            issue: `Image failed: ${imgUrl} (Status ${res.status})`
+            issue: `Image failed to load: ${imgUrl} (Status ${res.status})`
+          });
+        } else {
+          reports.push({
+            type: "Image",
+            issue: `Image loaded successfully: ${imgUrl}`
           });
         }
       } catch {
@@ -105,20 +127,30 @@ exports.handler = async function(event) {
       }
     }
 
+    /* ================= UI ELEMENT CHECK ================= */
+
+    const buttons = document.querySelectorAll("button");
+    if (buttons.length === 0) {
+      errors.push({
+        type: "UI",
+        issue: "No <button> elements found on this website."
+      });
+    }
+
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ errors, reports })
+      body: JSON.stringify({ reports, errors })
     };
 
   } catch (error) {
     return {
       statusCode: 500,
       body: JSON.stringify({
-        errors: [
-          { type: "System", issue: "Website blocked or cannot be reached." }
-        ],
-        message: error.message
+        errors: [{
+          type: "System",
+          issue: "Website blocked scanning or network error occurred."
+        }]
       })
     };
   }
