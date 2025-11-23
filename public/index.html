@@ -1,18 +1,68 @@
-<section class="report-container">
-<div class="report-tabs">
-<button onclick="setMainTab('all')" class="active">All</button>
-<button onclick="setMainTab('css')">CSS</button>
-<button onclick="setMainTab('javascript')">JavaScript</button>
-<button onclick="setMainTab('image')">Images</button>
-<button onclick="setMainTab('response')">Response Codes</button>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Web Failure Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <h1>Web Failure Scanner</h1>
+      <p>Scan any website for broken CSS, JavaScript, images and response issues.</p>
+    </div>
+  </header>
 
+  <main>
+    <!-- Scan panel -->
+    <section class="scanner-card">
+      <input
+        type="text"
+        id="domainInput"
+        placeholder="Enter website URL (e.g. https://example.com)"
+      />
+      <button onclick="scanWebsite()">Scan Now</button>
+    </section>
 
-<div class="sub-tabs">
-<button onclick="setSubTab('pass')" class="active">Pass</button>
-<button onclick="setSubTab('fail')">Fail</button>
-</div>
+    <div id="notification" class="notification notification-neutral">
+      🔍 Ready to scan. Enter a URL above.
+    </div>
 
+    <!-- Scan Report -->
+    <section class="report-wrapper">
+      <div class="report-header">
+        <h2>Scan Report</h2>
+        <span id="summaryChip" class="summary-chip">No scan yet</span>
+      </div>
 
-<div id="scanResults"></div>
-</section>
+      <!-- Main tabs -->
+      <div class="report-tabs">
+        <button class="active" data-tab="all" onclick="setMainTab('all', this)">All</button>
+        <button data-tab="css" onclick="setMainTab('css', this)">CSS</button>
+        <button data-tab="javascript" onclick="setMainTab('javascript', this)">JavaScript</button>
+        <button data-tab="image" onclick="setMainTab('image', this)">Images</button>
+        <button data-tab="response" onclick="setMainTab('response', this)">Response Codes</button>
+      </div>
+
+      <!-- Sub tabs -->
+      <div class="sub-tabs">
+        <button class="active" data-sub="pass" onclick="setSubTab('pass', this)">Pass</button>
+        <button data-sub="fail" onclick="setSubTab('fail', this)">Fail</button>
+      </div>
+
+      <!-- Results -->
+      <div id="scanResults" class="results-placeholder">
+        No data yet. Run a scan to see results.
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <small>Built for debugging front-end issues & asset failures.</small>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

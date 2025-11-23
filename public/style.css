@@ -1,41 +1,229 @@
-.report-container { padding: 20px; }
-
-
-.report-tabs, .sub-tabs {
-display: flex;
-justify-content: center;
-gap: 10px;
-margin: 10px 0;
+/* Base */
+* {
+  box-sizing: border-box;
 }
 
-
-.report-tabs button, .sub-tabs button {
-padding: 10px 20px;
-border-radius: 8px;
-border: none;
-cursor: pointer;
-background: #f3f4f6;
-font-weight: bold;
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #f6f9fc, #e9eff5);
+  color: #0f172a;
 }
 
-
-.report-tabs button.active, .sub-tabs button.active {
-background: #2563eb;
-color: white;
+main {
+  padding: 20px;
 }
 
+/* Header */
+
+.header {
+  background: linear-gradient(135deg, #005eff, #00c6ff);
+  color: #fff;
+  padding: 32px 20px;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.25);
+}
+
+.header-inner {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.header h1 {
+  margin: 0 0 8px 0;
+  font-size: 32px;
+}
+
+.header p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+/* Scanner card */
+
+.scanner-card {
+  max-width: 900px;
+  margin: -30px auto 12px;
+  padding: 18px;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.22);
+  display: flex;
+  gap: 10px;
+}
+
+.scanner-card input {
+  flex: 1;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #cbd5f5;
+  font-size: 15px;
+}
+
+.scanner-card button {
+  padding: 12px 22px;
+  border-radius: 10px;
+  border: none;
+  background: #005eff;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.scanner-card button:hover {
+  background: #0044c4;
+  transform: translateY(-1px);
+}
+
+/* Notification */
+
+.notification {
+  max-width: 900px;
+  margin: 0 auto 20px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.notification-neutral {
+  background: #e5f1ff;
+  color: #1d4ed8;
+}
+
+.notification-success {
+  background: #ecfdf5;
+  color: #15803d;
+}
+
+.notification-error {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+/* Report wrapper */
+
+.report-wrapper {
+  max-width: 900px;
+  margin: 0 auto 40px;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 20px 20px 24px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+}
+
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.report-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.summary-chip {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: #e5e7eb;
+  color: #111827;
+}
+
+/* Tabs */
+
+.report-tabs,
+.sub-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0;
+  flex-wrap: wrap;
+}
+
+.report-tabs button,
+.sub-tabs button {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: #111827;
+  transition: all 0.12s ease;
+}
+
+.report-tabs button.active,
+.sub-tabs button.active {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #1d4ed8;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
+}
+
+/* Result cards */
+
+#scanResults {
+  margin-top: 10px;
+}
+
+.results-placeholder {
+  padding: 14px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.asset-card {
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
 
 .asset-pass {
-border-left: 6px solid #16a34a;
-background: #ecfdf5;
-padding: 12px;
-margin: 8px 0;
+  background: #ecfdf5;
+  border-left: 5px solid #16a34a;
 }
 
-
 .asset-fail {
-border-left: 6px solid #dc2626;
-background: #fef2f2;
-padding: 12px;
-margin: 8px 0;
+  background: #fef2f2;
+  border-left: 5px solid #dc2626;
+}
+
+.asset-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.asset-type {
+  font-weight: 600;
+}
+
+.asset-status-code {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.asset-url {
+  word-break: break-all;
+  color: #1d4ed8;
+}
+
+.asset-message {
+  color: #4b5563;
+}
+
+/* Footer */
+
+.footer {
+  text-align: center;
+  padding: 10px 0 20px;
+  font-size: 12px;
+  color: #6b7280;
 }
