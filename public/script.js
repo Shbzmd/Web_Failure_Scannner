@@ -1,153 +1,76 @@
-let mainTab = "all";     // all | css | javascript | image | response
-let subTab = "fail";     // pass | fail
-let assets = [];         // filled from backend
+let mainTab = "all";
+let subTab = "pass";
+let assets = [];
 
-function normalizeUrl(input) {
-  if (!input) return "";
-  const trimmed = input.trim();
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  return "https://" + trimmed;
+function normalizeUrl(url) {
+  if (!url.startsWith('http')) return 'https://' + url;
+  return url;
 }
 
 function setMainTab(tab, btn) {
   mainTab = tab;
-  document
-    .querySelectorAll(".report-tabs button")
-    .forEach(b => b.classList.toggle("active", b === btn));
+  document.querySelectorAll('.report-tabs button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
   renderResults();
 }
 
 function setSubTab(tab, btn) {
   subTab = tab;
-  document
-    .querySelectorAll(".sub-tabs button")
-    .forEach(b => b.classList.toggle("active", b === btn));
+  document.querySelectorAll('.sub-tabs button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
   renderResults();
 }
 
 async function scanWebsite() {
-  const input = document.getElementById("domainInput");
-  const notification = document.getElementById("notification");
-  const resultsBox = document.getElementById("scanResults");
-  const summaryChip = document.getElementById("summaryChip");
+  const url = normalizeUrl(document.getElementById('domainInput').value);
+  const note = document.getElementById('notification');
 
-  let url = normalizeUrl(input.value);
-  if (!url) {
-    alert("Please enter a website URL.");
-    return;
-  }
+  note.textContent = "Scanning...";
+  note.className = "notification neutral";
 
-  notification.textContent = "⏳ Scanning website assets...";
-  notification.className = "notification notification-neutral";
-  resultsBox.innerHTML = "Scanning...";
-  summaryChip.textContent = "Scanning...";
+  const res = await fetch(`/.netlify/functions/scan?url=${encodeURIComponent(url)}`);
+  const data = await res.json();
+  assets = data.assets;
 
-  try {
-    const response = await fetch(
-      "/.netlify/functions/scan?url=" + encodeURIComponent(url)
-    );
-    const data = await response.json();
-    assets = data.assets || [];
+  const failCount = assets.filter(a => !a.ok).length;
 
-    const failCount = assets.filter(a => !a.ok).length;
-    const total = assets.length;
+  note.className = failCount ? "notification error" : "notification success";
+  note.textContent = failCount ? `❌ ${failCount} Issues Found` : "✅ No Issues Found";
 
-    if (failCount > 0) {
-      notification.textContent = `❌ ${failCount} issue(s) detected out of ${total} assets`;
-      notification.className = "notification notification-error";
-    } else {
-      notification.textContent = "✅ No asset failures detected";
-      notification.className = "notification notification-success";
-    }
-
-    summaryChip.textContent = `${total} assets • ${failCount} failing`;
-
-    // Default to Fail tab to show problems first
-    subTab = "fail";
-    document
-      .querySelectorAll(".sub-tabs button")
-      .forEach(b => b.classList.toggle("active", b.dataset.sub === "fail"));
-
-    renderResults();
-  } catch (err) {
-    console.error(err);
-    notification.textContent = "⚠️ Scan failed. Please check the URL or try again.";
-    notification.className = "notification notification-error";
-    resultsBox.innerHTML = "<p>Scan failed. Unable to reach the scanning service.</p>";
-    summaryChip.textContent = "Scan failed";
-  }
+  renderResults();
+  document.getElementById("summaryChip").textContent =
+    `${assets.length} assets • ${failCount} failing`;
 }
 
 function renderResults() {
-  const resultsBox = document.getElementById("scanResults");
+  const box = document.getElementById('scanResults');
+  let filtered = assets.filter(asset => {
 
-  if (!assets || assets.length === 0) {
-    resultsBox.innerHTML = '<p class="results-placeholder">No scan data yet.</p>';
-    return;
-  }
-
-  const wantPass = subTab === "pass";
-
-  const filtered = assets.filter(asset => {
-    // Filter by pass/fail
-    if (wantPass && !asset.ok) return false;
-    if (!wantPass && asset.ok) return false;
-
-    // Filter by main tab
-    if (mainTab === "all") {
-      return ["page", "css", "javascript", "image"].includes(asset.type);
-    }
     if (mainTab === "response") {
-      return true; // all assets show in Response tab
+      if (subTab === "pass") return asset.statusCode >= 200 && asset.statusCode < 400;
+      return asset.statusCode >= 400 || asset.statusCode === 0;
     }
+
+    if (subTab === "pass" && !asset.ok) return false;
+    if (subTab === "fail" && asset.ok) return false;
+
+    if (mainTab === "all") return true;
     return asset.type === mainTab;
   });
 
-  if (filtered.length === 0) {
-    const typeLabel =
-      mainTab === "all"
-        ? "assets"
-        : mainTab === "css"
-        ? "CSS assets"
-        : mainTab === "javascript"
-        ? "JavaScript assets"
-        : mainTab === "image"
-        ? "image assets"
-        : "assets";
-    resultsBox.innerHTML = `<p class="results-placeholder">No ${typeLabel} in this category.</p>`;
+  if (!filtered.length) {
+    box.innerHTML = "No results found.";
     return;
   }
 
-  let html = "";
-  filtered.forEach(asset => {
-    const cls = asset.ok ? "asset-pass" : "asset-fail";
-    const prettyType =
-      asset.type === "css"
-        ? "CSS"
-        : asset.type === "javascript"
-        ? "JavaScript"
-        : asset.type === "image"
-        ? "Image"
-        : asset.type === "page"
-        ? "Page"
-        : "System";
-
-    const code =
-      asset.statusCode === null || asset.statusCode === undefined
-        ? "-"
-        : asset.statusCode;
-
-    html += `
-      <div class="asset-card ${cls}">
-        <div class="asset-header">
-          <span class="asset-type">${prettyType}</span>
-          <span class="asset-status-code">Status: ${code}</span>
-        </div>
-        <div class="asset-url">${asset.url}</div>
-        <div class="asset-message">${asset.message || ""}</div>
+  box.innerHTML = filtered.map(a => `
+    <div class="asset-card ${a.ok ? 'asset-pass' : 'asset-fail'}">
+      <div class="asset-header">
+        <strong>${a.type.toUpperCase()}</strong>
+        <span>Status: ${a.statusCode || '-'}</span>
       </div>
-    `;
-  });
-
-  resultsBox.innerHTML = html;
+      <div class="asset-url">${a.url}</div>
+      <small>${a.message}</small>
+    </div>
+  `).join('');
 }
