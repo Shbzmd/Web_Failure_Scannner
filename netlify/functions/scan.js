@@ -1,60 +1,39 @@
-const fetch = require("node-fetch");
-const { JSDOM } = require("jsdom");
-const { URL } = require("url");
-
-exports.handler = async function (event) {
-  let pageUrl = event.queryStringParameters.url;
-  let assets = [];
-
-  if (!pageUrl.startsWith("http")) pageUrl = "https://" + pageUrl;
-
+async function check(type, url) {
   try {
-    const pageRes = await fetch(pageUrl);
-    const html = await pageRes.text();
-    const dom = new JSDOM(html);
-    const document = dom.window.document;
+    const full = new URL(url, pageUrl).href;
 
-    async function check(type, url) {
-      try {
-        const full = new URL(url, pageUrl).href;
-        const res = await fetch(full, { method: "HEAD" });
+    const res = await fetch(full, {
+      method: "GET",
+      redirect: "follow"
+    });
 
-        assets.push({
-          type,
-          url: full,
-          ok: res.ok,
-          statusCode: res.status,
-          message: res.ok ? "Loaded OK" : "Failed to load"
-        });
-      } catch {
-        assets.push({
-          type,
-          url,
-          ok: false,
-          statusCode: 0,
-          message: "Network Failure"
-        });
-      }
-    }
+    const contentType = res.headers.get("content-type") || "";
 
-    for (const link of document.querySelectorAll("link[rel='stylesheet']"))
-      await check("css", link.href);
+    let validType = true;
 
-    for (const script of document.querySelectorAll("script[src]"))
-      await check("javascript", script.src);
+    if (type === "css" && !contentType.includes("text/css")) validType = false;
+    if (type === "javascript" && !contentType.includes("javascript")) validType = false;
+    if (type === "image" && !contentType.includes("image")) validType = false;
 
-    for (const img of document.querySelectorAll("img"))
-      await check("image", img.src);
+    assets.push({
+      type,
+      url: full,
+      ok: res.ok && validType,
+      statusCode: res.status,
+      message: !res.ok
+        ? "HTTP Error"
+        : !validType
+        ? "Invalid content type"
+        : "Loaded OK"
+    });
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ assets })
-    };
-
-  } catch {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ assets: [] })
-    };
+  } catch (err) {
+    assets.push({
+      type,
+      url,
+      ok: false,
+      statusCode: 0,
+      message: "Network Failure"
+    });
   }
-};
+}
