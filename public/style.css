@@ -1,38 +1,72 @@
 body {
-font-family: Arial;
-background: #f4f4f4;
-padding: 20px;
+margin: 0;
+font-family: 'Inter', sans-serif;
+background: linear-gradient(135deg, #f6f9fc, #e9eff5);
 }
 
 
-.scanner-box {
-margin-bottom: 20px;
-}
-
-
-input {
-padding: 10px;
-width: 300px;
-}
-
-
-button {
-padding: 10px 20px;
-background: #005eff;
+.header {
+text-align: center;
+padding: 40px;
+background: linear-gradient(135deg, #005eff, #00c6ff);
 color: white;
-border: none;
-cursor: pointer;
 }
 
 
-#notification {
-margin-top: 20px;
+.scanner-card {
+background: white;
+margin: -30px auto 20px;
+padding: 25px;
+width: 60%;
+border-radius: 12px;
+box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+display: flex;
+gap: 10px;
+}
+
+
+.scanner-card input {
+flex: 1;
+padding: 12px;
+border-radius: 8px;
+border: 1px solid #ccc;
+font-size: 16px;
+}
+
+
+.scanner-card button {
+background: #005eff;
+border: none;
+color: white;
+padding: 12px 20px;
+border-radius: 8px;
+cursor: pointer;
 font-weight: bold;
 }
 
 
-pre {
-background: #222;
-color: #0f0;
-padding: 15px;
+.notification {
+text-align: center;
+margin: 15px auto;
+padding: 10px;
+width: 50%;
+border-radius: 8px;
+background: #e6fff2;
+color: #00994c;
+font-weight: bold;
+}
+
+
+.results-section {
+padding: 30px;
+}
+
+
+.results-box {
+background: white;
+border-radius: 12px;
+padding: 20px;
+box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+white-space: pre-wrap;
+font-family: monospace;
 }
