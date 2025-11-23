@@ -12,35 +12,60 @@ exports.handler = async function(event) {
   }
 
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000); // 15 sec limit
-
-    const response = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeout);
-
+    const response = await fetch(url);
     const html = await response.text();
+
     const dom = new JSDOM(html);
     const document = dom.window.document;
 
     let errors = [];
 
-    document.querySelectorAll("img").forEach(img => {
-      if (!img.src || img.src.trim() === "") {
+    // ✅ Check IMAGES
+    const images = document.querySelectorAll("img");
+    for (let img of images) {
+      if (!img.src) {
         errors.push({ type: "Image", issue: "Missing image source" });
+      } else {
+        try {
+          const imgCheck = await fetch(img.src);
+          if (!imgCheck.ok) {
+            errors.push({ type: "Image", issue: `Broken image: ${img.src}` });
+          }
+        } catch {
+          errors.push({ type: "Image", issue: `Image not reachable: ${img.src}` });
+        }
       }
-    });
+    }
 
-    document.querySelectorAll("link[rel='stylesheet']").forEach(link => {
-      if (!link.href) {
+    // ✅ Check CSS FILES
+    const stylesheets = document.querySelectorAll("link[rel='stylesheet']");
+    for (let css of stylesheets) {
+      if (!css.href) {
         errors.push({ type: "CSS", issue: "Stylesheet missing href" });
+      } else {
+        try {
+          const cssCheck = await fetch(css.href);
+          if (!cssCheck.ok) {
+            errors.push({ type: "CSS", issue: `Broken CSS file: ${css.href}` });
+          }
+        } catch {
+          errors.push({ type: "CSS", issue: `CSS not reachable: ${css.href}` });
+        }
       }
-    });
+    }
 
-    document.querySelectorAll("script").forEach(script => {
-      if (!script.src && !script.textContent.trim()) {
-        errors.push({ type: "JavaScript", issue: "Empty script tag" });
+    // ✅ Check JS FILES
+    const scripts = document.querySelectorAll("script[src]");
+    for (let script of scripts) {
+      try {
+        const jsCheck = await fetch(script.src);
+        if (!jsCheck.ok) {
+          errors.push({ type: "JavaScript", issue: `Broken JS file: ${script.src}` });
+        }
+      } catch {
+        errors.push({ type: "JavaScript", issue: `JS not reachable: ${script.src}` });
       }
-    });
+    }
 
     return {
       statusCode: 200,
@@ -48,14 +73,11 @@ exports.handler = async function(event) {
       body: JSON.stringify({ errors })
     };
 
-  } catch (err) {
+  } catch (error) {
     return {
       statusCode: 500,
       body: JSON.stringify({
-        errors: [
-          { type: "System", issue: "Failed to scan website or blocked by server" }
-        ],
-        message: err.message
+        errors: [{ type: "System", issue: "Website blocked scanning or failed to respond" }]
       })
     };
   }

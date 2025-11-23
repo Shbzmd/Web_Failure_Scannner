@@ -1,52 +1,41 @@
 async function scanWebsite() {
-  const domain = document.getElementById('domainInput').value;
-  const resultsBox = document.getElementById('results');
-  const notification = document.getElementById('notification');
+const domain = document.getElementById('domainInput').value;
+const resultsBox = document.getElementById('results');
+const notification = document.getElementById('notification');
 
-  if (!domain) {
-    alert('Please enter a valid URL');
-    return;
-  }
 
-  resultsBox.innerHTML = "<p>🔄 Scanning website...</p>";
-  notification.textContent = "⏳ Scanning in progress...";
+if (!domain) {
+alert('Enter a valid website URL');
+return;
+}
 
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
 
-    const response = await fetch(`/.netlify/functions/scan?url=${domain}`, {
-      signal: controller.signal
-    });
+resultsBox.innerHTML = 'Scanning...';
 
-    clearTimeout(timeout);
 
-    const data = await response.json();
+const response = await fetch(`/.netlify/functions/scan?url=${domain}`);
+const data = await response.json();
 
-    if (!data.errors || data.errors.length === 0) {
-      notification.textContent = '✅ No Issues Found';
-      resultsBox.innerHTML = "<p>No problems detected ✅</p>";
-      return;
-    }
 
-    notification.textContent = `❌ ${data.errors.length} Issues Found`;
+if (data.errors.length > 0) {
+notification.style.background = '#ffe6e6';
+notification.style.color = '#cc0000';
+notification.textContent = `❌ ${data.errors.length} Issues Found`;
+} else {
+notification.textContent = '✅ No Issues Found';
+}
 
-    let output = '';
-    data.errors.forEach(err => {
-      output += `
-        <div style="margin:10px 0;padding:10px;background:#ffecec;border-left:5px solid red;">
-          <strong>${err.type}</strong>: ${err.issue}
-        </div>`;
-    });
 
-    resultsBox.innerHTML = output;
+let html = '';
+data.errors.forEach(err => {
+html += `
+<div style="border-left:4px solid red;padding:10px;margin-bottom:10px;">
+<strong>Type:</strong> ${err.type}<br>
+<strong>Issue:</strong> ${err.issue}
+</div>
+`;
+});
 
-  } catch (error) {
-    notification.textContent = "⚠️ Scan Failed";
-    resultsBox.innerHTML = `
-      <div style="color:red;">
-        Website blocked scanning or connection timed out.
-      </div>
-    `;
-  }
+
+resultsBox.innerHTML = html || '<p>No errors detected ✅</p>';
 }
