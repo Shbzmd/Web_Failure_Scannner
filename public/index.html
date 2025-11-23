@@ -1,36 +1,18 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Web Failure Scanner</title>
-<link rel="stylesheet" href="style.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
-</head>
-<body>
+<section class="report-container">
+<div class="report-tabs">
+<button onclick="setMainTab('all')" class="active">All</button>
+<button onclick="setMainTab('css')">CSS</button>
+<button onclick="setMainTab('javascript')">JavaScript</button>
+<button onclick="setMainTab('image')">Images</button>
+<button onclick="setMainTab('response')">Response Codes</button>
+</div>
 
 
-<header class="header">
-<h1>Web Failure Scanner</h1>
-<p>Professional Website Asset Health Monitor</p>
-</header>
+<div class="sub-tabs">
+<button onclick="setSubTab('pass')" class="active">Pass</button>
+<button onclick="setSubTab('fail')">Fail</button>
+</div>
 
 
-<section class="scanner-card">
-<input type="text" id="domainInput" placeholder="Enter any website URL">
-<button onclick="scanWebsite()">Scan Now</button>
+<div id="scanResults"></div>
 </section>
-
-
-<section class="notification" id="notification">
-✅ No Issues Detected
-</section>
-
-
-<section class="results-section">
-<h2>Scan Report</h2>
-<div id="results" class="results-box"></div>
-</section>
-
-
-<script src="script.js"></script>
-</body>
-</html>

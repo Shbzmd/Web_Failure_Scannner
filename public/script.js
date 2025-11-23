@@ -1,54 +1,64 @@
+let mainTab = 'all';
+let subTab = 'pass';
+let scanData = {};
+
+
+function setMainTab(tab) {
+mainTab = tab;
+renderResults();
+}
+
+
+function setSubTab(tab) {
+subTab = tab;
+renderResults();
+}
+
+
 async function scanWebsite() {
-  const domain = document.getElementById('domainInput').value;
-  const resultsBox = document.getElementById('results');
-  const notification = document.getElementById('notification');
+const url = document.getElementById('domainInput').value;
+const resultsBox = document.getElementById('scanResults');
 
-  if (!domain) {
-    alert('Enter a valid website URL');
-    return;
-  }
 
-  resultsBox.innerHTML = "⏳ Scanning...";
-  notification.textContent = "Scanning in progress...";
+if (!url) return alert('Enter a valid URL');
 
-  try {
-    const response = await fetch(`/.netlify/functions/scan?url=${domain}`);
-    const data = await response.json();
 
-    let html = '';
+resultsBox.innerHTML = '⏳ Scanning...';
 
-    // ✅ Show WORKING assets
-    if (data.reports && data.reports.length > 0) {
-      data.reports.forEach(rep => {
-        html += `
-          <div style="border-left:5px solid #16a34a;padding:10px;margin-bottom:8px;background:#ecfdf5;">
-            ✅ <strong>${rep.type}</strong>: ${rep.issue}
-          </div>
-        `;
-      });
-    }
 
-    // ❌ Show FAILED assets
-    if (data.errors && data.errors.length > 0) {
-      data.errors.forEach(err => {
-        html += `
-          <div style="border-left:5px solid #dc2626;padding:10px;margin-bottom:8px;background:#fef2f2;">
-            ❌ <strong>${err.type}</strong>: ${err.issue}
-          </div>
-        `;
-      });
+const response = await fetch(`/.netlify/functions/scan?url=${url}`);
+scanData = await response.json();
 
-      notification.textContent = `❌ ${data.errors.length} Issue(s) Found`;
-    } else {
-      notification.textContent = '✅ All assets loaded successfully';
-    }
 
-    resultsBox.innerHTML = html || "<p>No results</p>";
+renderResults();
+}
 
-  } catch (error) {
-    notification.textContent = "⚠️ Scan failed";
-    resultsBox.innerHTML = `
-      <div style="color:red;">Unable to scan website. Check URL or network.</div>
-    `;
-  }
+
+function renderResults() {
+const resultsBox = document.getElementById('scanResults');
+let html = '';
+
+
+const list = subTab === 'pass' ? scanData.reports : scanData.errors;
+
+
+if (!list || list.length === 0) {
+resultsBox.innerHTML = '<p>No results found</p>';
+return;
+}
+
+
+list.forEach(item => {
+if (mainTab !== 'all' && item.type.toLowerCase() !== mainTab) return;
+
+
+html += `
+<div class="${subTab === 'pass' ? 'asset-pass' : 'asset-fail'}">
+<strong>${item.type}</strong><br>${item.issue}
+</div>
+`;
+});
+
+
+resultsBox.innerHTML = html || '<p>No matching results</p>';
 }

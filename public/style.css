@@ -1,70 +1,41 @@
-body {
-background: linear-gradient(135deg, #f6f9fc, #e9eff5);
-}
+.report-container { padding: 20px; }
 
 
-.header {
-text-align: center;
-padding: 40px;
-background: linear-gradient(135deg, #005eff, #00c6ff);
-color: white;
-}
-
-
-.scanner-card {
-background: white;
-margin: -30px auto 20px;
-padding: 25px;
-width: 60%;
-border-radius: 12px;
-box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+.report-tabs, .sub-tabs {
 display: flex;
+justify-content: center;
 gap: 10px;
+margin: 10px 0;
 }
 
 
-.scanner-card input {
-flex: 1;
-padding: 12px;
+.report-tabs button, .sub-tabs button {
+padding: 10px 20px;
 border-radius: 8px;
-border: 1px solid #ccc;
-font-size: 16px;
-}
-
-
-.scanner-card button {
-background: #005eff;
 border: none;
-color: white;
-padding: 12px 20px;
-border-radius: 8px;
 cursor: pointer;
+background: #f3f4f6;
 font-weight: bold;
 }
 
 
-.notification {
-text-align: center;
-margin: 15px auto;
-padding: 10px;
-width: 50%;
-border-radius: 8px;
-background: #e6fff2;
-color: #00994c;
-font-weight: bold;
+.report-tabs button.active, .sub-tabs button.active {
+background: #2563eb;
+color: white;
 }
 
 
-.results-section {
-padding: 30px;
+.asset-pass {
+border-left: 6px solid #16a34a;
+background: #ecfdf5;
+padding: 12px;
+margin: 8px 0;
 }
 
 
-.results-box {
-background: white;
-border-radius: 12px;
-padding: 20px;
-box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-white-space: pre-wrap;
-font-family: monospace;
+.asset-fail {
+border-left: 6px solid #dc2626;
+background: #fef2f2;
+padding: 12px;
+margin: 8px 0;
 }
