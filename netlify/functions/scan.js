@@ -35,7 +35,6 @@ exports.handler = async function (event) {
       assetList.push({ type: "image", url: i.src })
     );
 
-    // LIMIT ASSET SCAN TO PREVENT FREEZING
     const limitedAssets = assetList.slice(0, 50);
 
     async function checkAsset(asset) {
@@ -72,19 +71,30 @@ exports.handler = async function (event) {
       }
     }
 
-    // ✅ Parallel execution (NO more freezing)
     await Promise.all(limitedAssets.map(checkAsset));
+
+    // ✅ CRITICAL FIX: Determine CSS Status
+    const cssAssets = assets.filter(a => a.type === "css");
+    const failedCSS = cssAssets.filter(a => !a.ok);
+
+    const cssStatus = failedCSS.length > 0 ? "FAIL" : "PASS";
 
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ assets })
+      body: JSON.stringify({
+        cssStatus,
+        cssFailedCount: failedCSS.length,
+        failedCSS,
+        assets
+      })
     };
 
   } catch (err) {
     return {
       statusCode: 500,
       body: JSON.stringify({
+        cssStatus: "FAIL",
         assets: [],
         error: "Page could not be scanned"
       })
